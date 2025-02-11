@@ -42,15 +42,28 @@ from sequential_logins join login_details on sequential_logins.user_name = login
 where sequential_logins.user_name = second_login and sequential_logins.user_name = third_login;
 ```
 
+## Solution with case statement (like suggested solution):
+```SQLSELECT distinct user_name
+FROM (
+  select user_name,
+    CASE
+    WHEN user_name = LAG(user_name, 1) OVER (order by login_id) AND user_name = LAG(user_name, 2) OVER (order by login_id)
+      THEN user_name
+    ELSE null
+    END repeated
+  from login_details
+  )
+WHERE repeated is not null;
+```
+
 ##Solution:
 
 ```SQL
 select distinct repeated_names
 from (
-select *,
-case when user_name = lead(user_name) over(order by login_id)
-and  user_name = lead(user_name,2) over(order by login_id)
-then user_name else null end as repeated_names
-from login_details) x
+  select *,
+  case
+  when user_name = lead(user_name) over(order by login_id) and  user_name = lead(user_name,2) over(order by login_id) grhodes128@gmail.comthen user_name else null end as repeated_names
+  from login_details) x
 where x.repeated_names is not null;
 ```
